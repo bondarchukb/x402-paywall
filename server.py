@@ -15,6 +15,7 @@ Quickstart:
 import base64
 import json
 import os
+import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
@@ -54,25 +55,25 @@ _seller_routes: dict[str, RouteConfig] = {
     "GET /api/weather": RouteConfig(
         accepts=[PaymentOption(scheme="exact", pay_to=SELLER_WALLET,
                                price="$0.001", network=EVM_NETWORK)],
-        description="Weather data — $0.001",
+        description="Real-time weather — $0.001",
         mime_type="application/json",
     ),
-    "GET /api/analysis": RouteConfig(
+    "GET /api/price/*": RouteConfig(
         accepts=[PaymentOption(scheme="exact", pay_to=SELLER_WALLET,
-                               price="$0.010", network=EVM_NETWORK)],
-        description="Deep analysis — $0.010",
+                               price="$0.001", network=EVM_NETWORK)],
+        description="Live crypto price — $0.001",
         mime_type="application/json",
     ),
-    "POST /api/process": RouteConfig(
+    "GET /api/exchange": RouteConfig(
         accepts=[PaymentOption(scheme="exact", pay_to=SELLER_WALLET,
-                               price="$0.005", network=EVM_NETWORK)],
-        description="Process data — $0.005",
+                               price="$0.001", network=EVM_NETWORK)],
+        description="FX exchange rates — $0.001",
         mime_type="application/json",
     ),
-    "GET /api/premium/*": RouteConfig(
+    "GET /api/ip/*": RouteConfig(
         accepts=[PaymentOption(scheme="exact", pay_to=SELLER_WALLET,
-                               price="$0.050", network=EVM_NETWORK)],
-        description="Premium content — $0.050",
+                               price="$0.001", network=EVM_NETWORK)],
+        description="IP geolocation — $0.001",
         mime_type="application/json",
     ),
 }
@@ -200,23 +201,84 @@ async def admin_stats():
 
 @app.get("/api/weather", tags=["paid"])
 async def get_weather(city: str = "London"):
-    return {"city": city, "temperature_c": 18, "condition": "partly cloudy"}
+    """Real-time weather via wttr.in (no API key required)."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(f"https://wttr.in/{city}?format=j1")
+        r.raise_for_status()
+        data = r.json()
+    current = data["current_condition"][0]
+    return {
+        "city": city,
+        "temperature_c": int(current["temp_C"]),
+        "temperature_f": int(current["temp_F"]),
+        "feels_like_c": int(current["FeelsLikeC"]),
+        "condition": current["weatherDesc"][0]["value"],
+        "humidity_pct": int(current["humidity"]),
+        "wind_kmh": int(current["windspeedKmph"]),
+        "visibility_km": int(current["visibility"]),
+    }
 
 
-@app.get("/api/analysis", tags=["paid"])
-async def get_analysis(topic: str = "AI"):
-    return {"topic": topic, "summary": f"Analysis of {topic}.", "confidence": 0.92}
+@app.get("/api/price/{coin}", tags=["paid"])
+async def get_crypto_price(coin: str):
+    """Live crypto price via CoinGecko (no API key required)."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            "https://api.coingecko.com/api/v3/simple/price",
+            params={"ids": coin, "vs_currencies": "usd,eur,btc", "include_24hr_change": "true"},
+        )
+        r.raise_for_status()
+        data = r.json()
+    if coin not in data:
+        return JSONResponse(status_code=404, content={"error": f"Coin '{coin}' not found"})
+    prices = data[coin]
+    return {
+        "coin": coin,
+        "usd": prices.get("usd"),
+        "eur": prices.get("eur"),
+        "btc": prices.get("btc"),
+        "change_24h_pct": prices.get("usd_24h_change"),
+    }
 
 
-@app.post("/api/process", tags=["paid"])
-async def process_data(request: Request):
-    body = await request.json()
-    return {"received_keys": list(body.keys()), "processed": True}
+@app.get("/api/exchange", tags=["paid"])
+async def get_exchange_rates(base: str = "USD", to: str = "EUR,GBP,JPY,BTC"):
+    """Live FX rates via frankfurter.app (no API key required)."""
+    symbols = to.upper()
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(
+            "https://api.frankfurter.app/latest",
+            params={"base": base.upper(), "symbols": symbols},
+        )
+        r.raise_for_status()
+        data = r.json()
+    return {
+        "base": data["base"],
+        "date": data["date"],
+        "rates": data["rates"],
+    }
 
 
-@app.get("/api/premium/{item}", tags=["paid"])
-async def get_premium(item: str):
-    return {"item": item, "content": f"Premium content: {item}", "tier": "premium"}
+@app.get("/api/ip/{address}", tags=["paid"])
+async def get_ip_info(address: str):
+    """IP geolocation via ip-api.com (no API key required)."""
+    async with httpx.AsyncClient(timeout=10) as client:
+        r = await client.get(f"http://ip-api.com/json/{address}")
+        r.raise_for_status()
+        data = r.json()
+    if data.get("status") == "fail":
+        return JSONResponse(status_code=400, content={"error": data.get("message", "lookup failed")})
+    return {
+        "ip": data.get("query"),
+        "country": data.get("country"),
+        "region": data.get("regionName"),
+        "city": data.get("city"),
+        "lat": data.get("lat"),
+        "lon": data.get("lon"),
+        "isp": data.get("isp"),
+        "org": data.get("org"),
+        "timezone": data.get("timezone"),
+    }
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

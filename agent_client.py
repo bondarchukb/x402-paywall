@@ -51,27 +51,27 @@ async def main():
         r = await paid.get("/health")
         print(r.json())
 
-        # ── Paid endpoint 1: weather ($0.001) ─────────────────────────────────
-        print("\n── GET /api/weather  ($0.001) ──────────────────────────────")
+        # ── Paid endpoint 1: real weather ($0.001) ───────────────────────────
+        print("\n── GET /api/weather?city=Tokyo  ($0.001) ───────────────────")
         r = await paid.get("/api/weather", params={"city": "Tokyo"})
         r.raise_for_status()
         print(r.json())
 
-        # ── Paid endpoint 2: analysis ($0.01) ─────────────────────────────────
-        print("\n── GET /api/analysis  ($0.01) ──────────────────────────────")
-        r = await paid.get("/api/analysis", params={"topic": "blockchain"})
+        # ── Paid endpoint 2: live crypto price ($0.001) ───────────────────────
+        print("\n── GET /api/price/bitcoin  ($0.001) ────────────────────────")
+        r = await paid.get("/api/price/bitcoin")
         r.raise_for_status()
         print(r.json())
 
-        # ── Paid endpoint 3: POST process ($0.005) ────────────────────────────
-        print("\n── POST /api/process  ($0.005) ─────────────────────────────")
-        r = await paid.post("/api/process", json={"input": "hello", "mode": "fast"})
+        # ── Paid endpoint 3: FX rates ($0.001) ───────────────────────────────
+        print("\n── GET /api/exchange?base=USD  ($0.001) ────────────────────")
+        r = await paid.get("/api/exchange", params={"base": "USD", "to": "EUR,GBP,JPY"})
         r.raise_for_status()
         print(r.json())
 
-        # ── Paid endpoint 4: premium wildcard ($0.05) ─────────────────────────
-        print("\n── GET /api/premium/report-q1  ($0.05) ─────────────────────")
-        r = await paid.get("/api/premium/report-q1")
+        # ── Paid endpoint 4: IP geolocation ($0.001) ──────────────────────────
+        print("\n── GET /api/ip/8.8.8.8  ($0.001) ───────────────────────────")
+        r = await paid.get("/api/ip/8.8.8.8")
         r.raise_for_status()
         print(r.json())
 

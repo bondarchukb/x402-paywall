@@ -1,6 +1,6 @@
 # x402 Paywall
 
-AI agents can now autonomously pay for API calls — no subscriptions, no API keys, no human in the loop. This project lets you wrap any API with a USDC micropayment gate using the [x402 protocol](https://x402.org), so agents pay exactly what they consume, per call, on Base blockchain.
+Every API should be monetizable the moment you build it. x402 Paywall lets you add a USDC payment gate to any endpoint in minutes — no Stripe, no subscriptions, no API key management. Anyone who calls your API pays per request, automatically, in stablecoin.
 
 ---
 

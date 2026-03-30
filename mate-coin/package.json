@@ -1,0 +1,29 @@
+{
+  "name": "mate-coin",
+  "version": "1.0.0",
+  "description": "MATE — Solana SPL meme coin with mint authority",
+  "scripts": {
+    "build": "anchor build",
+    "test": "anchor test",
+    "deploy:devnet": "anchor deploy --provider.cluster devnet",
+    "deploy:mainnet": "anchor deploy --provider.cluster mainnet",
+    "create-token": "ts-node scripts/create-token.ts",
+    "mint": "ts-node scripts/mint.ts",
+    "airdrop": "ts-node scripts/airdrop.ts"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.30.1",
+    "@solana/spl-token": "^0.4.9",
+    "@solana/web3.js": "^1.98.0"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.3.0",
+    "@types/mocha": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "chai": "^4.3.4",
+    "mocha": "^9.0.3",
+    "ts-mocha": "^10.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.4"
+  }
+}
